@@ -101,5 +101,12 @@ export function buildConfigSchema(_ctx: NapCatPluginContext): PluginConfigSchema
             default: '',
             description: '留空表示全部群聊及私聊均可响应，多个群号用英文逗号隔开',
         },
+        {
+            key: 'report_self_message',
+            label: '响应自身消息 (Bot自身外发消息触发)',
+            type: 'boolean',
+            default: false,
+            description: '开启后机器人自身在手机或PC端发出的指令也能正常响应',
+        },
     ];
 }

@@ -62,6 +62,28 @@ export const plugin_cleanup: PluginModule['plugin_cleanup'] = async (ctx) => {
     }
 };
 
+// ==================== 配置管理钩子 (支持NapCat插件管理面板) ====================
+
+export const plugin_get_config: PluginModule['plugin_get_config'] = async (_ctx) => {
+    return pluginState.config;
+};
+
+export const plugin_set_config: PluginModule['plugin_set_config'] = async (ctx, config) => {
+    pluginState.replaceConfig(config as any);
+    ctx.logger.info('⚙️ 配置已通过 NapCat 插件管理更新');
+};
+
+export const plugin_on_config_change: PluginModule['plugin_on_config_change'] = async (
+    ctx, _ui, key, value, _currentConfig
+) => {
+    try {
+        pluginState.updateConfig({ [key]: value });
+        ctx.logger.info(`⚙️ 配置项 ${key} 已更新`);
+    } catch (err) {
+        ctx.logger.error(`更新配置项 ${key} 失败:`, err);
+    }
+};
+
 /**
  * 注册 WebUI
  */
@@ -70,8 +92,21 @@ function registerWebUI(ctx: NapCatPluginContext): void {
         const webuiDist = path.resolve(ctx.pluginPath, 'webui');
         const router = ctx.router;
 
+        // 1. 托管前端静态资源
+        router.static('/webui', 'webui');
+        router.static('/static', 'webui');
+
+        // 2. 注册到 NapCat 扩展页面 (在 WebUI 顶部/侧边栏「插件扩展页面」Tab展示)
+        router.page({
+            path: 'auth',
+            title: '域名授权管理',
+            icon: '🐾',
+            htmlFile: 'webui/index.html',
+            description: 'Nathan 域名授权管理系统 Web 控制台',
+        });
+
+        // 兼容原独立访问根路由
         if (fs.existsSync(webuiDist)) {
-            router.static('/webui', webuiDist);
             router.getNoAuth('/', (_req, res) => {
                 res.sendFile(path.join(webuiDist, 'index.html'));
             });

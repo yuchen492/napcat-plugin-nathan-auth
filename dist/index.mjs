@@ -105,6 +105,13 @@ function buildConfigSchema(_ctx) {
       type: "string",
       default: "",
       description: "留空表示全部群聊及私聊均可响应，多个群号用英文逗号隔开"
+    },
+    {
+      key: "report_self_message",
+      label: "响应自身消息 (Bot自身外发消息触发)",
+      type: "boolean",
+      default: false,
+      description: "开启后机器人自身在手机或PC端发出的指令也能正常响应"
     }
   ];
 }
@@ -757,12 +764,35 @@ const plugin_cleanup = async (ctx) => {
     ctx.logger.warn("插件卸载时出错:", e);
   }
 };
+const plugin_get_config = async (_ctx) => {
+  return pluginState.config;
+};
+const plugin_set_config = async (ctx, config) => {
+  pluginState.replaceConfig(config);
+  ctx.logger.info("⚙️ 配置已通过 NapCat 插件管理更新");
+};
+const plugin_on_config_change = async (ctx, _ui, key, value, _currentConfig) => {
+  try {
+    pluginState.updateConfig({ [key]: value });
+    ctx.logger.info(`⚙️ 配置项 ${key} 已更新`);
+  } catch (err) {
+    ctx.logger.error(`更新配置项 ${key} 失败:`, err);
+  }
+};
 function registerWebUI(ctx) {
   try {
     const webuiDist = path.resolve(ctx.pluginPath, "webui");
     const router = ctx.router;
+    router.static("/webui", "webui");
+    router.static("/static", "webui");
+    router.page({
+      path: "auth",
+      title: "域名授权管理",
+      icon: "🐾",
+      htmlFile: "webui/index.html",
+      description: "Nathan 域名授权管理系统 Web 控制台"
+    });
     if (fs.existsSync(webuiDist)) {
-      router.static("/webui", webuiDist);
       router.getNoAuth("/", (_req, res) => {
         res.sendFile(path.join(webuiDist, "index.html"));
       });
@@ -778,4 +808,4 @@ function registerWebUI(ctx) {
   }
 }
 
-export { plugin_cleanup, plugin_config_ui, plugin_init, plugin_onevent, plugin_onmessage };
+export { plugin_cleanup, plugin_config_ui, plugin_get_config, plugin_init, plugin_on_config_change, plugin_onevent, plugin_onmessage, plugin_set_config };

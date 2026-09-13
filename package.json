@@ -43,5 +43,6 @@
     "dev": "vite build --watch",
     "deploy": "vite build",
     "typecheck": "tsc --noEmit"
-  }
+  },
+  "icon": "icon.png"
 }
