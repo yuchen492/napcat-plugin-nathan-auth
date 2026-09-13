@@ -20,7 +20,7 @@ export function App() {
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
-    // 查询 / 开通 / 制卡 表单状态
+    // 查询 / 开通 / 生成激活码 表单状态
     const [queryDomain, setQueryDomain] = useState('');
     const [queryAppid, setQueryAppid] = useState('');
     const [queryResult, setQueryResult] = useState<any>(null);
@@ -142,7 +142,7 @@ export function App() {
         }
     };
 
-    // 生成卡密
+    // 生成授权码
     const handleCreateCards = async () => {
         setLoading(true);
         setCardResult(null);
@@ -155,7 +155,7 @@ export function App() {
             const data = await res.json();
             setCardResult(data.data);
             if (String(data.data?.code) === '1' || Array.isArray(data.data)) {
-                showMsg('卡密生成成功！');
+                showMsg('授权码生成成功！');
                 fetchStatus();
             } else {
                 showMsg(data.data?.msg || '生成失败', 'error');
@@ -237,7 +237,7 @@ export function App() {
                 {[
                     { id: 'status', label: '📊 仪表盘概览' },
                     { id: 'manage', label: '🌐 授权管理与查询' },
-                    { id: 'cards', label: '🎫 卡密批量生成' },
+                    { id: 'cards', label: '🎫 授权码批量生成' },
                     { id: 'config', label: '⚙️ 系统与接口设置' },
                 ].map((t) => (
                     <button
@@ -266,7 +266,7 @@ export function App() {
                                 <div className="text-xs text-indigo-400 mt-2">包含群聊与私聊指令</div>
                             </div>
                             <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-sm">
-                                <div className="text-slate-400 text-xs font-medium">自助卡密激活</div>
+                                <div className="text-slate-400 text-xs font-medium">自助授权码激活</div>
                                 <div className="text-2xl font-bold text-emerald-400 mt-2">{status?.stats?.totalActivates || 0} 次</div>
                                 <div className="text-xs text-emerald-500/80 mt-2">用户自助兑换</div>
                             </div>
@@ -276,9 +276,9 @@ export function App() {
                                 <div className="text-xs text-amber-500/80 mt-2">站长/管理员开通</div>
                             </div>
                             <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-sm">
-                                <div className="text-slate-400 text-xs font-medium">已生成卡密总计</div>
+                                <div className="text-slate-400 text-xs font-medium">已生成授权码总计</div>
                                 <div className="text-2xl font-bold text-purple-400 mt-2">{status?.stats?.totalCardsCreated || 0} 张</div>
-                                <div className="text-xs text-purple-400/80 mt-2">批量卡密生成数</div>
+                                <div className="text-xs text-purple-400/80 mt-2">批量授权码生成数</div>
                             </div>
                         </div>
 
@@ -318,13 +318,13 @@ export function App() {
                                 <div className="space-y-2 text-xs text-slate-300 leading-relaxed font-mono bg-slate-900/60 p-4 rounded-xl border border-slate-700/50">
                                     <div className="text-indigo-400 font-bold mb-1">【普通用户指令】</div>
                                     <div>#查授权 &lt;域名&gt;</div>
-                                    <div>#激活授权 &lt;卡密&gt; &lt;域名&gt;</div>
+                                    <div>#激活授权 &lt;授权码&gt; &lt;域名&gt;</div>
                                     <div>#换绑授权 &lt;旧域名&gt; &lt;新域名&gt;</div>
                                     <div>#授权帮助</div>
 
                                     <div className="text-amber-400 font-bold mt-3 mb-1">【管理员特权指令】</div>
                                     <div>#开通授权 &lt;域名&gt; &lt;QQ&gt; [天数] [项目ID]</div>
-                                    <div>#生成卡密 &lt;数量&gt; [天数] [项目ID]</div>
+                                    <div>#生成授权码 &lt;数量&gt; [天数] [项目ID]</div>
                                     <div>#封禁授权 &lt;域名&gt; [原因]</div>
                                     <div>#解封授权 &lt;域名&gt;</div>
                                     <div>#删除授权 &lt;域名&gt;</div>
@@ -517,14 +517,14 @@ export function App() {
                     </div>
                 )}
 
-                {/* 3. 卡密批量生成 */}
+                {/* 3. 授权码批量生成 */}
                 {activeTab === 'cards' && (
                     <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-6 max-w-3xl mx-auto">
                         <div className="border-b border-slate-700 pb-4">
                             <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                                <span>🎫</span> 批量制卡 / 生成卡密
+                                <span>🎫</span> 批量生成激活码 / 生成授权码
                             </h3>
-                            <p className="text-xs text-slate-400 mt-1">自动调用 Nathan 后台制卡接口，生成卡密可供客户在 QQ 私聊或群内直接激活核销。</p>
+                            <p className="text-xs text-slate-400 mt-1">自动调用 Nathan 后台生成激活码接口，生成授权码可供客户在 QQ 私聊或群内直接激活核销。</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -540,7 +540,7 @@ export function App() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">卡密有效时长 (天，0为永久)</label>
+                                <label className="block text-xs text-slate-400 mb-1">授权码有效时长 (天，0为永久)</label>
                                 <input
                                     type="number"
                                     min="0"
@@ -550,7 +550,7 @@ export function App() {
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">卡密前缀 (例如 AUTH)</label>
+                                <label className="block text-xs text-slate-400 mb-1">授权码前缀 (例如 AUTH)</label>
                                 <input
                                     type="text"
                                     value={cardForm.prefix}
@@ -575,12 +575,12 @@ export function App() {
                             disabled={loading}
                             className="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-purple-600/30 disabled:opacity-50"
                         >
-                            {loading ? '正在批量制卡...' : `一键批量生成 ${cardForm.count} 张卡密`}
+                            {loading ? '正在批量生成激活码...' : `一键批量生成 ${cardForm.count} 张授权码`}
                         </button>
 
                         {cardResult && (
                             <div className="p-4 rounded-xl bg-slate-900 border border-slate-700 space-y-2">
-                                <div className="text-xs text-slate-400 font-medium">卡密生成结果：</div>
+                                <div className="text-xs text-slate-400 font-medium">授权码生成结果：</div>
                                 <textarea
                                     readOnly
                                     rows={8}
@@ -627,7 +627,7 @@ export function App() {
                                     placeholder="支持逗号分隔，如：2322796106,10001"
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500 font-mono"
                                 />
-                                <span className="text-xs text-slate-500 mt-1 block">该列表内的 QQ 拥有群聊与私聊的全部后台管理、添加授权、制卡拉黑特权。</span>
+                                <span className="text-xs text-slate-500 mt-1 block">该列表内的 QQ 拥有群聊与私聊的全部后台管理、添加授权、生成激活码拉黑特权。</span>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -697,7 +697,7 @@ export function App() {
                                         onChange={(e) => setConfig({ ...config, allow_user_activate: e.target.checked })}
                                         className="w-4 h-4 accent-indigo-600"
                                     />
-                                    <span className="text-xs text-slate-300">允许用户自助卡密激活</span>
+                                    <span className="text-xs text-slate-300">允许用户自助授权码激活</span>
                                 </label>
                                 <label className="flex items-center gap-2 p-3 bg-slate-900/40 border border-slate-700/50 rounded-xl cursor-pointer">
                                     <input

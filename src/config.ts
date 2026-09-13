@@ -73,10 +73,10 @@ export function buildConfigSchema(_ctx: NapCatPluginContext): PluginConfigSchema
         },
         {
             key: 'allow_user_activate',
-            label: '允许普通用户卡密激活',
+            label: '允许普通用户授权码激活',
             type: 'boolean',
             default: true,
-            description: '开启后群成员可通过 #激活授权 卡密 域名 激活',
+            description: '开启后群成员可通过 #激活授权 授权码 域名 激活',
         },
         {
             key: 'allow_user_query',

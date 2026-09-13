@@ -19,7 +19,7 @@ export interface PluginConfig {
     default_appid: string;
 
     // 机器人指令与交互开关
-    /** 允许普通用户自助激活卡密 (#激活授权) */
+    /** 允许普通用户自助激活授权码 (#激活授权) */
     allow_user_activate: boolean;
     /** 允许普通用户自助查询域名 (#查授权) */
     allow_user_query: boolean;

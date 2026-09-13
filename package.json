@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "main": "index.mjs",
-  "description": "NapCat Nathan 域名授权系统管理插件 (支持WebUI管理面板/QQ指令/卡密生成/授权开通/到期监控/黑名单拉黑)",
+  "description": "NapCat Nathan 域名授权管理系统插件 (支持WebUI管理面板/QQ指令/授权码发放/授权开通/到期监控/黑名单拉黑)",
   "author": "YunBai",
   "license": "MIT",
   "keywords": [
@@ -13,11 +13,11 @@
     "qq",
     "nathan",
     "auth",
-    "domain-license"
+    "license"
   ],
   "napcat": {
     "tags": [
-      "授权系统",
+      "授权管理",
       "站长工具",
       "WebUI"
     ],

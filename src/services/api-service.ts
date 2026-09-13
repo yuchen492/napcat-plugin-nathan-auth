@@ -77,7 +77,7 @@ export function registerApiRoutes(ctx: NapCatPluginContext): void {
         res.json({ code: 0, data: result });
     });
 
-    /** WebUI: 批量生成卡密 */
+    /** WebUI: 批量生成授权码 */
     router.postNoAuth('/create-cards', async (req, res) => {
         const body = req.body as any;
         const count = parseInt(body?.count || '1', 10);

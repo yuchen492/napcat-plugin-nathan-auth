@@ -38,13 +38,13 @@ export async function handleMessage(ctx: NapCatPluginContext, event: OB11Message
             let help = `🐾 【Nathan 域名授权管理助手】\n` +
                 `------------------------\n` +
                 `#查授权 [域名] - 查询域名是否正版授权\n` +
-                `#激活授权 [卡密] [域名] - 自助核销卡密绑定授权\n` +
+                `#激活授权 [授权码] [域名] - 自助核销授权码绑定授权\n` +
                 `#换绑授权 [旧域名] [新域名] - 自助更换授权域名\n`;
 
             if (isAdmin) {
                 help += `\n👑 【管理员后台特权指令】\n` +
                     `#开通授权 [域名] [QQ] [天数/0为永久] [应用ID可选]\n` +
-                    `#生成卡密 [数量] [天数/0为永久] [应用ID可选]\n` +
+                    `#生成授权码 [数量] [天数/0为永久] [应用ID可选]\n` +
                     `#封禁授权 [域名] [原因可选]\n` +
                     `#解封授权 [域名]\n` +
                     `#删除授权 [域名]\n` +
@@ -76,13 +76,13 @@ export async function handleMessage(ctx: NapCatPluginContext, event: OB11Message
 
         case '激活授权': {
             if (!pluginState.config.allow_user_activate && !isAdmin) {
-                await reply('❌ 当前管理员未开放普通用户自助卡密激活。');
+                await reply('❌ 当前管理员未开放普通用户自助授权码激活。');
                 return;
             }
             const key = args[1];
             const domain = args[2];
             if (!key || !domain) {
-                await reply('💡 格式：#激活授权 [卡密] [域名]\n例如：#激活授权 AUTH-XXXXX test.com');
+                await reply('💡 格式：#激活授权 [授权码] [域名]\n例如：#激活授权 AUTH-XXXXX test.com');
                 return;
             }
             const res = await NathanApiService.createAuthByCard({
@@ -93,7 +93,7 @@ export async function handleMessage(ctx: NapCatPluginContext, event: OB11Message
             if (String(res.code) === '1') {
                 await reply(`🎉 激活成功！\n域名：${domain}\n绑定 QQ：${userId}\n反馈：${res.msg}`);
             } else {
-                await reply(`❌ 激活失败：${res.msg || '卡密无效或已被使用'}`);
+                await reply(`❌ 激活失败：${res.msg || '授权码无效或已被使用'}`);
             }
             break;
         }
@@ -154,8 +154,8 @@ export async function handleMessage(ctx: NapCatPluginContext, event: OB11Message
             break;
         }
 
-        case '生成卡密':
-        case '制卡': {
+        case '生成授权码':
+        case '生成激活码': {
             if (!isAdmin) {
                 await reply('⛔ 无权执行此操作，该指令仅限系统管理员。');
                 return;
@@ -165,7 +165,7 @@ export async function handleMessage(ctx: NapCatPluginContext, event: OB11Message
             const appid = args[3];
 
             if (isNaN(count) || count < 1 || count > 50) {
-                await reply('💡 格式：#生成卡密 [数量1-50] [天数/0为永久] [应用ID]\n例如：#生成卡密 5 0 1');
+                await reply('💡 格式：#生成授权码 [数量1-50] [天数/0为永久] [应用ID]\n例如：#生成授权码 5 0 1');
                 return;
             }
 
@@ -177,11 +177,11 @@ export async function handleMessage(ctx: NapCatPluginContext, event: OB11Message
 
             if (String(res.code) === '1' || (res.data && Array.isArray(res.data))) {
                 const cards = Array.isArray(res.data) ? res.data : [res.msg || '生成完成'];
-                let text = `📦 已成功生成 ${count} 张卡密 (${days === 0 ? '永久' : `${days}天`})：\n`;
+                let text = `📦 已成功生成 ${count} 张授权码 (${days === 0 ? '永久' : `${days}天`})：\n`;
                 text += cards.map((c: any) => (typeof c === 'string' ? c : c.card || JSON.stringify(c))).join('\n');
                 await reply(text);
             } else {
-                await reply(`❌ 制卡失败：${res.msg || '请检查网站安全密钥是否正确'}`);
+                await reply(`❌ 生成激活码失败：${res.msg || '请检查网站安全密钥是否正确'}`);
             }
             break;
         }

@@ -48,7 +48,7 @@ export class NathanApiService {
     }
 
     /**
-     * 2. 卡密自助授权
+     * 2. 授权码自助授权
      */
     public static async createAuthByCard(params: {
         key: string;
@@ -100,7 +100,7 @@ export class NathanApiService {
     }
 
     /**
-     * 4. 批量生成卡密
+     * 4. 批量生成授权码
      */
     public static async createCards(params: {
         count: number;
