@@ -93,16 +93,15 @@ function registerWebUI(ctx: NapCatPluginContext): void {
         const router = ctx.router;
 
         // 1. 托管前端静态资源
-        router.static('/webui', 'webui');
         router.static('/static', 'webui');
+        router.static('/webui', 'webui');
 
-        // 2. 注册到 NapCat 扩展页面 (在 WebUI 顶部/侧边栏「插件扩展页面」Tab展示)
+        // 2. 注册到 NapCat 扩展页面
         router.page({
             path: 'auth',
-            title: '域名授权管理',
-            icon: '🐾',
+            title: '授权管理助手',
             htmlFile: 'webui/index.html',
-            description: 'Nathan 域名授权管理系统 Web 控制台',
+            description: '授权管理助手 Web 控制台',
         });
 
         // 兼容原独立访问根路由

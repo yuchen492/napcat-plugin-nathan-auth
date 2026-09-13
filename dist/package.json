@@ -1,10 +1,10 @@
 {
   "name": "napcat-plugin-nathan-auth",
-  "plugin": "Nathan 域名授权管理系统",
+  "plugin": "授权管理助手",
   "version": "1.1.0",
   "type": "module",
   "main": "index.mjs",
-  "description": "NapCat Nathan 域名授权管理系统插件 (支持WebUI管理面板/QQ指令/授权码发放/授权开通/到期监控/黑名单拉黑)",
+  "description": "NapCat 授权管理助手插件 (支持WebUI管理面板/QQ指令/授权码发放/授权开通/到期监控/黑名单拉黑)",
   "author": "YunBai",
   "icon": "icon.png",
   "dependencies": {

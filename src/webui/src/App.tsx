@@ -209,7 +209,7 @@ export function App() {
                     </div>
                     <div>
                         <h1 className="text-lg font-bold text-white flex items-center gap-2">
-                            Nathan 域名授权管理系统
+                            授权管理助手
                             <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded-full border border-indigo-500/30">
                                 NapCat Pro
                             </span>
@@ -624,7 +624,7 @@ export function App() {
                             <h3 className="text-base font-semibold text-white flex items-center gap-2">
                                 <span>⚙️</span> 接口连接与鉴权配置
                             </h3>
-                            <p className="text-xs text-slate-400 mt-1">配置 Nathan 域名授权站点的访问地址、通信安全密钥及管理员特权 QQ。</p>
+                            <p className="text-xs text-slate-400 mt-1">配置授权站点的访问地址、通信安全密钥及管理员特权 QQ。</p>
                         </div>
 
                         <div className="space-y-4">

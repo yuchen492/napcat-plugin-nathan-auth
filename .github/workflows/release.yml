@@ -1,0 +1,80 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., v1.1.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version }}" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/}"
+          else
+            VERSION="v$(date +'%Y%m%d%H%M%S')"
+          fi
+          CLEAN_VERSION=$(echo $VERSION | sed 's/^v//')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "clean_version=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Update package.json version
+        run: |
+          npm version ${{ steps.version.outputs.clean_version }} --no-git-tag-version --allow-same-version
+
+      - name: Build WebUI
+        run: npm run build:webui
+
+      - name: Build project
+        run: npm run build
+
+      - name: Prepare release package
+        env:
+          PLUGIN_NAME: napcat-plugin-nathan-auth
+        run: |
+          mkdir -p release
+          cp dist/index.mjs release/
+          cp dist/package.json release/
+          cp dist/icon.png release/
+          cp -r dist/webui release/
+
+          cd release
+          zip -r ../${PLUGIN_NAME}.zip index.mjs package.json icon.png webui
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: 授权管理助手 ${{ steps.version.outputs.version }}
+          files: napcat-plugin-nathan-auth.zip
+          draft: false
+          prerelease: false
+          generate_release_notes: true

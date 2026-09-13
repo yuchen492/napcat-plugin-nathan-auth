@@ -783,14 +783,13 @@ function registerWebUI(ctx) {
   try {
     const webuiDist = path.resolve(ctx.pluginPath, "webui");
     const router = ctx.router;
-    router.static("/webui", "webui");
     router.static("/static", "webui");
+    router.static("/webui", "webui");
     router.page({
       path: "auth",
-      title: "域名授权管理",
-      icon: "🐾",
+      title: "授权管理助手",
       htmlFile: "webui/index.html",
-      description: "Nathan 域名授权管理系统 Web 控制台"
+      description: "授权管理助手 Web 控制台"
     });
     if (fs.existsSync(webuiDist)) {
       router.getNoAuth("/", (_req, res) => {
