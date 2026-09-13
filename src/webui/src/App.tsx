@@ -7,9 +7,8 @@ import ToastContainer from './components/ToastContainer'
 import StatusPage from './pages/StatusPage'
 import ManagePage from './pages/ManagePage'
 import CardsPage from './pages/CardsPage'
-import SettingsPage from './pages/SettingsPage'
 
-export type PageId = 'status' | 'manage' | 'cards' | 'settings'
+export type PageId = 'status' | 'manage' | 'cards'
 
 interface PageMeta {
     title: string
@@ -19,8 +18,7 @@ interface PageMeta {
 const pageMeta: Record<PageId, PageMeta> = {
     status: { title: '状态概览', description: '查看授权管理助手运行状态与业务数据统计' },
     manage: { title: '授权管理', description: '查询域名正版授权、快速添加开通、封禁解封与删除' },
-    cards: { title: '生成授权码', description: '批量生成授权激活码卡密，支持自定义项目、天数与前缀' },
-    settings: { title: '插件设置', description: '配置 Nathan 授权系统通讯密钥、管理员与各功能开关' },
+    cards: { title: '生成授权码', description: '批量生成授权激活码，支持自定义项目、天数与前缀' },
 }
 
 export default function App() {
@@ -57,7 +55,6 @@ export default function App() {
                     {currentPage === 'status' && <StatusPage status={status} onRefresh={fetchStatus} />}
                     {currentPage === 'manage' && <ManagePage onRefresh={fetchStatus} />}
                     {currentPage === 'cards' && <CardsPage onRefresh={fetchStatus} />}
-                    {currentPage === 'settings' && <SettingsPage onRefresh={fetchStatus} />}
                 </div>
             </main>
             <ToastContainer />

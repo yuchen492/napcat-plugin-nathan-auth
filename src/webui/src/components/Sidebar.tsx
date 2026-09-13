@@ -1,5 +1,5 @@
 import type { PageId } from '../App'
-import { IconDashboard, IconTask } from './icons'
+import { IconDashboard } from './icons'
 
 interface SidebarProps {
     currentPage: PageId
@@ -10,7 +10,6 @@ const navItems: { id: PageId; label: string; icon: React.ReactNode }[] = [
     { id: 'status', label: '状态概览', icon: <IconDashboard size={18} /> },
     { id: 'manage', label: '授权管理', icon: <span className="text-base">🛡️</span> },
     { id: 'cards', label: '生成授权码', icon: <span className="text-base">🎫</span> },
-    { id: 'settings', label: '插件设置', icon: <IconTask size={18} /> },
 ]
 
 export default function Sidebar({ currentPage, onPageChange }: SidebarProps) {

@@ -657,7 +657,8 @@ function registerApiRoutes(ctx) {
           allow_user_query: pluginState.config.allow_user_query,
           allow_user_replace: pluginState.config.allow_user_replace,
           allowed_groups: pluginState.config.allowed_groups,
-          report_self_message: pluginState.config.report_self_message
+          report_self_message: pluginState.config.report_self_message,
+          command_prefix: pluginState.config.command_prefix
         }
       }
     });
