@@ -15,6 +15,8 @@ export const defaultConfig: PluginConfig = {
     allow_user_replace: true,
     allowed_groups: '',
 
+    report_self_message: false,
+
     tg_enable: false,
     tg_bot_token: '',
     tg_chat_id: '',
@@ -98,6 +100,6 @@ export function buildConfigSchema(_ctx: NapCatPluginContext): PluginConfigSchema
             type: 'string',
             default: '',
             description: '留空表示全部群聊及私聊均可响应，多个群号用英文逗号隔开',
-        }
+        },
     ];
 }

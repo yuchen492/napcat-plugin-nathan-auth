@@ -8,6 +8,7 @@ interface PluginStatus {
         totalActivates: number;
         totalAdds: number;
         totalCardsCreated: number;
+        totalSelfMessages: number;
         lastActiveTime: string;
     };
     config: any;
@@ -153,12 +154,12 @@ export function App() {
                 body: JSON.stringify(cardForm),
             });
             const data = await res.json();
-            setCardResult(data.data);
-            if (String(data.data?.code) === '1' || Array.isArray(data.data)) {
-                showMsg('授权码生成成功！');
+            if (data.code === 0) {
+                setCardResult(data.data);
+                showMsg('批量生成授权码完成！');
                 fetchStatus();
             } else {
-                showMsg(data.data?.msg || '生成失败', 'error');
+                showMsg(data.message || '生成失败', 'error');
             }
         } catch (e: any) {
             showMsg(e.message, 'error');
@@ -167,16 +168,20 @@ export function App() {
         }
     };
 
-    // 快捷封禁 / 解封 / 删除
-    const handleQuickAction = async (action: 'freeze' | 'unseal' | 'delete') => {
-        if (!actionDomain) return showMsg('请输入目标域名', 'error');
+    // 快捷管理：封禁/解封/删除
+    const handleAuthAction = async (action: 'freeze' | 'unseal' | 'delete') => {
+        if (!actionDomain) return showMsg('请输入操作目标域名', 'error');
         setLoading(true);
         try {
-            const endpoint = `./api/${action}-auth`;
+            const urlMap: Record<string, string> = {
+                freeze: './api/freeze-auth',
+                unseal: './api/unseal-auth',
+                delete: './api/delete-auth',
+            };
             const payload: any = { url: actionDomain };
             if (action === 'freeze') payload.reason = freezeReason;
 
-            const res = await fetch(endpoint, {
+            const res = await fetch(urlMap[action], {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -259,7 +264,7 @@ export function App() {
                 {/* 1. 仪表盘 */}
                 {activeTab === 'status' && (
                     <div className="space-y-6">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-sm">
                                 <div className="text-slate-400 text-xs font-medium">总查询次数</div>
                                 <div className="text-2xl font-bold text-white mt-2">{status?.stats?.totalQueries || 0} 次</div>
@@ -279,6 +284,13 @@ export function App() {
                                 <div className="text-slate-400 text-xs font-medium">已生成授权码总计</div>
                                 <div className="text-2xl font-bold text-purple-400 mt-2">{status?.stats?.totalCardsCreated || 0} 张</div>
                                 <div className="text-xs text-purple-400/80 mt-2">批量授权码生成数</div>
+                            </div>
+                            <div className="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-sm">
+                                <div className="text-slate-400 text-xs font-medium">自身消息上报与处理</div>
+                                <div className="text-2xl font-bold text-cyan-400 mt-2">{status?.stats?.totalSelfMessages || 0} 条</div>
+                                <div className="text-xs text-cyan-500/80 mt-2">
+                                    {config?.report_self_message ? '🟢 上报监听已开启' : '⚪ 上报监听未开启'}
+                                </div>
                             </div>
                         </div>
 
@@ -303,6 +315,12 @@ export function App() {
                                     <div className="flex justify-between border-b border-slate-700/60 pb-2">
                                         <span className="text-slate-400">默认授权项目 (AppID)</span>
                                         <span className="text-slate-300 font-mono">{config?.default_appid || '1'}</span>
+                                    </div>
+                                    <div className="flex justify-between border-b border-slate-700/60 pb-2">
+                                        <span className="text-slate-400">上报自身消息 (reportSelfMessage)</span>
+                                        <span className={config?.report_self_message ? "text-emerald-400 font-medium" : "text-slate-400 font-medium"}>
+                                            {config?.report_self_message ? '已启用 (处理自身发出的指令)' : '未启用 (仅处理群友/他人私聊)'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-slate-400">最近业务活跃</span>
@@ -369,75 +387,82 @@ export function App() {
                                     disabled={loading}
                                     className="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-indigo-600/30 disabled:opacity-50"
                                 >
-                                    {loading ? '正在查询...' : '立即查询授权状态'}
+                                    {loading ? '正在查询...' : '🚀 立即查询授权状态'}
                                 </button>
                             </div>
 
                             {queryResult && (
-                                <div className="mt-4 p-4 rounded-xl bg-slate-900/80 border border-slate-700 text-sm space-y-2">
-                                    <div className="flex items-center gap-2">
-                                        <span className="font-bold">查询反馈：</span>
-                                        <span className={String(queryResult.code) === '1' ? 'text-emerald-400 font-bold' : 'text-rose-400 font-bold'}>
-                                            {String(queryResult.code) === '1' ? '正版有效授权 ✅' : '授权未通过 ❌'}
+                                <div className="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-700 space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs text-slate-400">核验结果反馈</span>
+                                        <span className={`text-xs px-2 py-0.5 rounded font-bold ${
+                                            String(queryResult.code) === '1' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'
+                                        }`}>
+                                            {String(queryResult.code) === '1' ? '正版有效' : '未授权/无效'}
                                         </span>
                                     </div>
-                                    <pre className="text-xs text-slate-400 overflow-x-auto bg-slate-950 p-2 rounded-lg">
+                                    <pre className="text-xs font-mono text-slate-300 bg-slate-950 p-3 rounded-lg overflow-x-auto">
                                         {JSON.stringify(queryResult, null, 2)}
                                     </pre>
                                 </div>
                             )}
 
-                            {/* 快捷封禁/解封 */}
-                            <div className="pt-4 border-t border-slate-700 space-y-3">
-                                <h4 className="text-xs font-semibold text-slate-300">⚡ 快捷封禁 / 解封 / 删除</h4>
-                                <input
-                                    type="text"
-                                    placeholder="输入要操作的域名"
-                                    value={actionDomain}
-                                    onChange={(e) => setActionDomain(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
-                                />
-                                <input
-                                    type="text"
-                                    placeholder="封禁拉黑原因 (仅封禁时有效)"
-                                    value={freezeReason}
-                                    onChange={(e) => setFreezeReason(e.target.value)}
-                                    className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
-                                />
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => handleQuickAction('freeze')}
-                                        className="flex-1 py-2 bg-rose-600/80 hover:bg-rose-500 text-white rounded-xl text-xs font-medium transition"
-                                    >
-                                        🔒 封禁拉黑
-                                    </button>
-                                    <button
-                                        onClick={() => handleQuickAction('unseal')}
-                                        className="flex-1 py-2 bg-emerald-600/80 hover:bg-emerald-500 text-white rounded-xl text-xs font-medium transition"
-                                    >
-                                        🔓 解除封禁
-                                    </button>
-                                    <button
-                                        onClick={() => handleQuickAction('delete')}
-                                        className="flex-1 py-2 bg-slate-700 hover:bg-red-700 text-white rounded-xl text-xs font-medium transition"
-                                    >
-                                        🗑️ 删除授权
-                                    </button>
+                            {/* 快捷操作：封禁 / 解封 / 删除 */}
+                            <div className="pt-4 border-t border-slate-700/60 space-y-3">
+                                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider">⚡ 快捷特权处置</h4>
+                                <div className="space-y-2">
+                                    <input
+                                        type="text"
+                                        placeholder="待处置域名 (例如 evil.com)"
+                                        value={actionDomain}
+                                        onChange={(e) => setActionDomain(e.target.value)}
+                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs focus:outline-none focus:border-indigo-500"
+                                    />
+                                    <input
+                                        type="text"
+                                        placeholder="封禁拉黑原因 (选填)"
+                                        value={freezeReason}
+                                        onChange={(e) => setFreezeReason(e.target.value)}
+                                        className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs focus:outline-none focus:border-indigo-500"
+                                    />
+                                    <div className="flex gap-2 pt-1">
+                                        <button
+                                            onClick={() => handleAuthAction('freeze')}
+                                            disabled={loading}
+                                            className="flex-1 py-2 bg-amber-600/80 hover:bg-amber-600 text-white rounded-lg text-xs font-medium transition"
+                                        >
+                                            🚫 封禁域名
+                                        </button>
+                                        <button
+                                            onClick={() => handleAuthAction('unseal')}
+                                            disabled={loading}
+                                            className="flex-1 py-2 bg-emerald-600/80 hover:bg-emerald-600 text-white rounded-lg text-xs font-medium transition"
+                                        >
+                                            🔓 解封授权
+                                        </button>
+                                        <button
+                                            onClick={() => handleAuthAction('delete')}
+                                            disabled={loading}
+                                            className="flex-1 py-2 bg-rose-600/80 hover:bg-rose-600 text-white rounded-lg text-xs font-medium transition"
+                                        >
+                                            🗑️ 删除授权
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
 
-                        {/* 右：管理员添加授权 */}
+                        {/* 右：手动添加开通授权 */}
                         <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-4">
                             <h3 className="text-base font-semibold text-white flex items-center gap-2">
                                 <span>➕</span> 手动开通新授权
                             </h3>
                             <div className="space-y-3">
                                 <div>
-                                    <label className="block text-xs text-slate-400 mb-1">授权域名 *</label>
+                                    <label className="block text-xs text-slate-400 mb-1">域名 (URL) *</label>
                                     <input
                                         type="text"
-                                        placeholder="例如：domain.com"
+                                        placeholder="例如：myauth.com"
                                         value={addForm.url}
                                         onChange={(e) => setAddForm({ ...addForm, url: e.target.value })}
                                         className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
@@ -447,7 +472,7 @@ export function App() {
                                     <label className="block text-xs text-slate-400 mb-1">站长 QQ *</label>
                                     <input
                                         type="text"
-                                        placeholder="例如：2322796106"
+                                        placeholder="例如：10001"
                                         value={addForm.qq}
                                         onChange={(e) => setAddForm({ ...addForm, qq: e.target.value })}
                                         className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
@@ -455,17 +480,16 @@ export function App() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">有效时长 (天)</label>
+                                        <label className="block text-xs text-slate-400 mb-1">有效天数 (0 为永久)</label>
                                         <input
-                                            type="text"
-                                            placeholder="0 为永久"
+                                            type="number"
                                             value={addForm.authdate}
                                             onChange={(e) => setAddForm({ ...addForm, authdate: e.target.value })}
                                             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">应用 AppID</label>
+                                        <label className="block text-xs text-slate-400 mb-1">项目 AppID (选填)</label>
                                         <input
                                             type="text"
                                             placeholder="默认项目"
@@ -477,38 +501,40 @@ export function App() {
                                 </div>
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">绑定的服务器 IP (选填)</label>
+                                        <label className="block text-xs text-slate-400 mb-1">绑定服务器 IP (选填)</label>
                                         <input
                                             type="text"
-                                            placeholder="127.0.0.1"
+                                            placeholder="留空自动获取"
                                             value={addForm.ip}
                                             onChange={(e) => setAddForm({ ...addForm, ip: e.target.value })}
                                             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
                                         />
                                     </div>
                                     <div>
-                                        <label className="block text-xs text-slate-400 mb-1">联系邮箱 (选填)</label>
+                                        <label className="block text-xs text-slate-400 mb-1">站长邮箱 (选填)</label>
                                         <input
-                                            type="text"
-                                            placeholder="站长邮箱"
+                                            type="email"
+                                            placeholder="user@example.com"
                                             value={addForm.email}
                                             onChange={(e) => setAddForm({ ...addForm, email: e.target.value })}
                                             className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
                                         />
                                     </div>
                                 </div>
+
                                 <button
                                     onClick={handleAddAuth}
                                     disabled={loading}
-                                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-600/30 disabled:opacity-50"
+                                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-sm font-medium transition shadow-lg shadow-emerald-600/30 disabled:opacity-50 mt-2"
                                 >
-                                    {loading ? '正在开通...' : '立即开通授权'}
+                                    {loading ? '正在开通...' : '✨ 确认添加并开通授权'}
                                 </button>
                             </div>
 
                             {addResult && (
-                                <div className="mt-4 p-4 rounded-xl bg-slate-900/80 border border-slate-700 text-sm space-y-2">
-                                    <pre className="text-xs text-slate-300 overflow-x-auto bg-slate-950 p-2 rounded-lg">
+                                <div className="mt-4 p-4 rounded-xl bg-slate-900 border border-slate-700 space-y-2">
+                                    <div className="text-xs text-slate-400 font-medium">开通结果反馈：</div>
+                                    <pre className="text-xs font-mono text-slate-300 bg-slate-950 p-3 rounded-lg overflow-x-auto">
                                         {JSON.stringify(addResult, null, 2)}
                                     </pre>
                                 </div>
@@ -519,33 +545,32 @@ export function App() {
 
                 {/* 3. 授权码批量生成 */}
                 {activeTab === 'cards' && (
-                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-6 max-w-3xl mx-auto">
+                    <div className="bg-slate-800 border border-slate-700 rounded-2xl p-6 space-y-6 max-w-4xl mx-auto">
                         <div className="border-b border-slate-700 pb-4">
                             <h3 className="text-base font-semibold text-white flex items-center gap-2">
-                                <span>🎫</span> 批量生成激活码 / 生成授权码
+                                <span>🎫</span> 批量制卡 / 生成授权激活码
                             </h3>
-                            <p className="text-xs text-slate-400 mt-1">自动调用 Nathan 后台生成激活码接口，生成授权码可供客户在 QQ 私聊或群内直接激活核销。</p>
+                            <p className="text-xs text-slate-400 mt-1">支持自定义生成数量、授权有效期天数、指定应用项目及卡密前缀。</p>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">生成张数 (1-50)</label>
+                                <label className="block text-xs text-slate-400 mb-1">生成数量 (1 ~ 50 张)</label>
                                 <input
                                     type="number"
-                                    min="1"
-                                    max="50"
+                                    min={1}
+                                    max={50}
                                     value={cardForm.count}
-                                    onChange={(e) => setCardForm({ ...cardForm, count: parseInt(e.target.value) || 1 })}
+                                    onChange={(e) => setCardForm({ ...cardForm, count: parseInt(e.target.value, 10) || 1 })}
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
                                 />
                             </div>
                             <div>
-                                <label className="block text-xs text-slate-400 mb-1">授权码有效时长 (天，0为永久)</label>
+                                <label className="block text-xs text-slate-400 mb-1">授权时长 (天，0 为永久授权)</label>
                                 <input
                                     type="number"
-                                    min="0"
                                     value={cardForm.authdate}
-                                    onChange={(e) => setCardForm({ ...cardForm, authdate: parseInt(e.target.value) || 0 })}
+                                    onChange={(e) => setCardForm({ ...cardForm, authdate: parseInt(e.target.value, 10) || 0 })}
                                     className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-sm focus:outline-none focus:border-indigo-500"
                                 />
                             </div>
@@ -612,6 +637,19 @@ export function App() {
                                     type="checkbox"
                                     checked={config?.enabled !== false}
                                     onChange={(e) => setConfig({ ...config, enabled: e.target.checked })}
+                                    className="w-5 h-5 accent-indigo-600 cursor-pointer"
+                                />
+                            </div>
+
+                            <div className="flex items-center justify-between p-4 bg-slate-900/60 rounded-xl border border-slate-700/50">
+                                <div>
+                                    <div className="text-sm font-medium text-white">上报/处理自身发送的消息 (reportSelfMessage)</div>
+                                    <div className="text-xs text-slate-400">开启后机器人将监听并响应自身发出的指令（message_sent 事件），仪表盘将实时统计自身消息处理数</div>
+                                </div>
+                                <input
+                                    type="checkbox"
+                                    checked={config?.report_self_message === true}
+                                    onChange={(e) => setConfig({ ...config, report_self_message: e.target.checked })}
                                     className="w-5 h-5 accent-indigo-600 cursor-pointer"
                                 />
                             </div>
@@ -746,4 +784,5 @@ export function App() {
         </div>
     );
 }
+
 export default App;

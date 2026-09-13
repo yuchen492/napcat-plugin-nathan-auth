@@ -28,6 +28,10 @@ export interface PluginConfig {
     /** 限制仅在指定群生效 (留空则私聊与所有群皆可，逗号分隔群号) */
     allowed_groups: string;
 
+    // 是否响应/上报自身发送的消息
+    /** 是否处理/响应自身发出的消息 (包含 message_sent) */
+    report_self_message: boolean;
+
     // Telegram 告警配置 (可选)
     tg_enable: boolean;
     tg_bot_token: string;

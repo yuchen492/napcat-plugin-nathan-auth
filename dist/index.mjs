@@ -22,6 +22,7 @@ const defaultConfig = {
   allow_user_query: true,
   allow_user_replace: true,
   allowed_groups: "",
+  report_self_message: false,
   tg_enable: false,
   tg_bot_token: "",
   tg_chat_id: ""
@@ -121,6 +122,7 @@ class PluginState {
     totalActivates: 0,
     totalAdds: 0,
     totalCardsCreated: 0,
+    totalSelfMessages: 0,
     lastActiveTime: ""
   };
   constructor() {
@@ -634,7 +636,8 @@ function registerApiRoutes(ctx) {
           allow_user_activate: pluginState.config.allow_user_activate,
           allow_user_query: pluginState.config.allow_user_query,
           allow_user_replace: pluginState.config.allow_user_replace,
-          allowed_groups: pluginState.config.allowed_groups
+          allowed_groups: pluginState.config.allowed_groups,
+          report_self_message: pluginState.config.report_self_message
         }
       }
     });
@@ -714,11 +717,10 @@ function registerApiRoutes(ctx) {
     const result = await NathanApiService.deleteAuth(url, appid);
     res.json({ code: 0, data: result });
   });
-  router.getNoAuth("/app-list", async (_req, res) => {
+  router.getNoAuth("/apps", async (_req, res) => {
     const result = await NathanApiService.getAppList();
     res.json({ code: 0, data: result });
   });
-  ctx.logger.debug("Nathan API 路由注册完成");
 }
 
 let plugin_config_ui = [];
@@ -739,7 +741,14 @@ const plugin_onmessage = async (ctx, event) => {
   if (!pluginState.config.enabled) return;
   await handleMessage(ctx, event);
 };
-const plugin_onevent = async (_ctx, _event) => {
+const plugin_onevent = async (ctx, event) => {
+  if (event.post_type === "message_sent") {
+    if (!pluginState.config.enabled) return;
+    if (pluginState.config.report_self_message) {
+      pluginState.stats.totalSelfMessages = (pluginState.stats.totalSelfMessages || 0) + 1;
+      await handleMessage(ctx, event);
+    }
+  }
 };
 const plugin_cleanup = async (ctx) => {
   try {

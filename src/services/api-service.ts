@@ -23,6 +23,7 @@ export function registerApiRoutes(ctx: NapCatPluginContext): void {
                     allow_user_query: pluginState.config.allow_user_query,
                     allow_user_replace: pluginState.config.allow_user_replace,
                     allowed_groups: pluginState.config.allowed_groups,
+                    report_self_message: pluginState.config.report_self_message,
                 },
             },
         });
@@ -120,11 +121,9 @@ export function registerApiRoutes(ctx: NapCatPluginContext): void {
         res.json({ code: 0, data: result });
     });
 
-    /** WebUI: 获取应用列表 */
-    router.getNoAuth('/app-list', async (_req, res) => {
+    /** WebUI: 获取所有授权项目列表 */
+    router.getNoAuth('/apps', async (_req, res) => {
         const result = await NathanApiService.getAppList();
         res.json({ code: 0, data: result });
     });
-
-    ctx.logger.debug('Nathan API 路由注册完成');
 }

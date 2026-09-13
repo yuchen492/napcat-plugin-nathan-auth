@@ -18,6 +18,7 @@ export class PluginState {
         totalActivates: 0,
         totalAdds: 0,
         totalCardsCreated: 0,
+        totalSelfMessages: 0,
         lastActiveTime: '',
     };
 

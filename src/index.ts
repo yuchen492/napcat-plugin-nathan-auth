@@ -43,7 +43,16 @@ export const plugin_onmessage: PluginModule['plugin_onmessage'] = async (ctx, ev
     await handleMessage(ctx, event);
 };
 
-export const plugin_onevent: PluginModule['plugin_onevent'] = async (_ctx, _event) => {};
+export const plugin_onevent: PluginModule['plugin_onevent'] = async (ctx, event) => {
+    // 捕获 Bot 自身发送的消息 (message_sent 事件)
+    if ((event as any).post_type === 'message_sent') {
+        if (!pluginState.config.enabled) return;
+        if (pluginState.config.report_self_message) {
+            pluginState.stats.totalSelfMessages = (pluginState.stats.totalSelfMessages || 0) + 1;
+            await handleMessage(ctx, event);
+        }
+    }
+};
 
 export const plugin_cleanup: PluginModule['plugin_cleanup'] = async (ctx) => {
     try {
