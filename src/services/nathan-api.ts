@@ -113,7 +113,7 @@ export class NathanApiService {
         pluginState.stats.lastActiveTime = new Date().toLocaleString();
         return this.request('/api/index/createCard', {
             webkey: pluginState.config.web_key,
-            CardAct: 1,
+            CardAct: 2,
             count: params.count || 1,
             appid: params.appid || pluginState.config.default_appid,
             authdate: params.authdate !== undefined ? params.authdate : 0,

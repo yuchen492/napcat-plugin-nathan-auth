@@ -18,6 +18,7 @@ const defaultConfig = {
   admin_name: "admin",
   admin_password: "",
   default_appid: "1",
+  command_prefix: "#",
   allow_user_activate: true,
   allow_user_query: true,
   allow_user_replace: true,
@@ -77,6 +78,13 @@ function buildConfigSchema(_ctx) {
       type: "string",
       default: "1",
       description: "不指定应用时的默认授权应用 ID"
+    },
+    {
+      key: "command_prefix",
+      label: "指令唤醒前缀",
+      type: "string",
+      default: "#",
+      description: "群聊及私聊命令触发前缀，如 #、/ 或 ! 等，留空则无需前缀"
     },
     {
       key: "allow_user_activate",
@@ -287,7 +295,7 @@ class NathanApiService {
     pluginState.stats.lastActiveTime = (/* @__PURE__ */ new Date()).toLocaleString();
     return this.request("/api/index/createCard", {
       webkey: pluginState.config.web_key,
-      CardAct: 1,
+      CardAct: 2,
       count: params.count || 1,
       appid: params.appid || pluginState.config.default_appid,
       authdate: params.authdate !== void 0 ? params.authdate : 0,
@@ -361,14 +369,16 @@ class NathanApiService {
 
 async function handleMessage(ctx, event) {
   const rawMsg = event.raw_message?.trim() || "";
-  if (!rawMsg.startsWith("#")) return;
+  const prefix = pluginState.config.command_prefix !== void 0 ? pluginState.config.command_prefix : "#";
+  if (prefix && !rawMsg.startsWith(prefix)) return;
   const userId = event.user_id;
   const groupId = event.group_id;
   if (groupId && !pluginState.isGroupAllowed(groupId)) {
     return;
   }
   const isAdmin = pluginState.isAdmin(userId);
-  const args = rawMsg.slice(1).trim().split(/\s+/);
+  const content = prefix ? rawMsg.slice(prefix.length).trim() : rawMsg.trim();
+  const args = content.split(/\s+/);
   const command = args[0]?.toLowerCase();
   const reply = async (text) => {
     try {
@@ -381,26 +391,27 @@ async function handleMessage(ctx, event) {
       ctx.logger.error("回复消息失败:", e);
     }
   };
+  const p = prefix || "";
   switch (command) {
     // ================= 普通用户指令 =================
     case "授权帮助":
     case "authhelp": {
       let help = `🐾 【Nathan 域名授权管理助手】
 ------------------------
-#查授权 [域名] - 查询域名是否正版授权
-#激活授权 [授权码] [域名] - 自助核销授权码绑定授权
-#换绑授权 [旧域名] [新域名] - 自助更换授权域名
+${p}查授权 [域名] - 查询域名是否正版授权
+${p}激活授权 [授权码] [域名] - 自助核销授权码绑定授权
+${p}换绑授权 [旧域名] [新域名] - 自助更换授权域名
 `;
       if (isAdmin) {
         help += `
 👑 【管理员后台特权指令】
-#开通授权 [域名] [QQ] [天数/0为永久] [应用ID可选]
-#生成授权码 [数量] [天数/0为永久] [应用ID可选]
-#封禁授权 [域名] [原因可选]
-#解封授权 [域名]
-#删除授权 [域名]
-#应用列表 - 查看所有授权项目
-#授权公告 - 查看系统最新公告`;
+${p}开通授权 [域名] [QQ] [天数/0为永久] [应用ID可选]
+${p}生成授权码 [数量] [天数/0为永久] [应用ID可选]
+${p}封禁授权 [域名] [原因可选]
+${p}解封授权 [域名]
+${p}删除授权 [域名]
+${p}应用列表 - 查看所有授权项目
+${p}授权公告 - 查看系统最新公告`;
       }
       await reply(help);
       break;
@@ -412,7 +423,8 @@ async function handleMessage(ctx, event) {
       }
       const domain = args[1];
       if (!domain) {
-        await reply("💡 格式：#查授权 [域名]\n例如：#查授权 example.com");
+        await reply(`💡 格式：${p}查授权 [域名]
+例如：${p}查授权 example.com`);
         return;
       }
       const res = await NathanApiService.queryAuth(domain);
@@ -436,7 +448,8 @@ async function handleMessage(ctx, event) {
       const key = args[1];
       const domain = args[2];
       if (!key || !domain) {
-        await reply("💡 格式：#激活授权 [授权码] [域名]\n例如：#激活授权 AUTH-XXXXX test.com");
+        await reply(`💡 格式：${p}激活授权 [授权码] [域名]
+例如：${p}激活授权 AUTH-XXXXX test.com`);
         return;
       }
       const res = await NathanApiService.createAuthByCard({

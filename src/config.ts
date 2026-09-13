@@ -10,6 +10,8 @@ export const defaultConfig: PluginConfig = {
     admin_password: '',
     default_appid: '1',
 
+    command_prefix: '#',
+
     allow_user_activate: true,
     allow_user_query: true,
     allow_user_replace: true,
@@ -72,6 +74,13 @@ export function buildConfigSchema(_ctx: NapCatPluginContext): PluginConfigSchema
             type: 'string',
             default: '1',
             description: '不指定应用时的默认授权应用 ID',
+        },
+        {
+            key: 'command_prefix',
+            label: '指令唤醒前缀',
+            type: 'string',
+            default: '#',
+            description: '群聊及私聊命令触发前缀，如 #、/ 或 ! 等，留空则无需前缀',
         },
         {
             key: 'allow_user_activate',
