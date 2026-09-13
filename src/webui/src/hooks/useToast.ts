@@ -26,22 +26,21 @@ function getSnapshot() {
     return toasts
 }
 
-export function addToast(message: string, type: ToastType = 'info') {
+export function showToast(message: string, type: ToastType = 'info') {
     const id = ++toastId
     toasts = [...toasts, { id, message, type }]
     emitChange()
+
     setTimeout(() => {
         toasts = toasts.map(t => t.id === id ? { ...t, hiding: true } : t)
         emitChange()
         setTimeout(() => {
             toasts = toasts.filter(t => t.id !== id)
             emitChange()
-        }, 350)
+        }, 300)
     }, 3000)
 }
 
 export function useToasts() {
-    return useSyncExternalStore(subscribe, getSnapshot)
+    return useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }
-
-export const showToast = (message: string, type: ToastType = 'info') => addToast(message, type)

@@ -1,5 +1,5 @@
 import type { PluginStatus } from '../types'
-import { IconRefresh, IconClock } from '../components/icons'
+import { IconRefresh } from '../components/icons'
 
 interface StatusPageProps {
     status: PluginStatus | null
@@ -10,36 +10,52 @@ export default function StatusPage({ status, onRefresh }: StatusPageProps) {
     if (!status) {
         return (
             <div className="flex items-center justify-center h-64">
-                <div className="text-gray-400 dark:text-gray-500">加载中...</div>
+                <div className="text-gray-400 dark:text-gray-500">正在采集授权系统运行状态...</div>
             </div>
         )
     }
 
-    const cards = [
-        { label: '运行时长', value: status.uptimeFormatted, color: 'from-blue-500 to-blue-600', icon: '⏱️' },
-        { label: '今日处理', value: String(status.stats.todayProcessed), color: 'from-emerald-500 to-emerald-600', icon: '📊' },
-        { label: '累计处理', value: String(status.stats.processed), color: 'from-purple-500 to-purple-600', icon: '📈' },
-        { label: '自定义任务', value: String(status.config.tasks?.length || 0), color: 'from-orange-500 to-orange-600', icon: '🤖' },
-    ]
+    const s = status.stats || {
+        totalQueries: 0,
+        totalActivates: 0,
+        totalAdds: 0,
+        totalCardsCreated: 0,
+        totalSelfMessages: 0,
+        lastActiveTime: '',
+    }
 
-    const builtinStatus = [
-        { name: 'QQ 群每日打卡', enabled: status.config.groupSign_enable, time: status.config.groupSign_time },
-        { name: 'QQ 好友每日名片赞', enabled: status.config.friendLike_enable, time: status.config.friendLike_time },
-        { name: '群自动续火花', enabled: status.config.groupSpark_enable, time: status.config.groupSpark_time },
-        { name: '好友自动续火花', enabled: status.config.friendSpark_enable, time: status.config.friendSpark_time },
+    const cards = [
+        { label: '总查询次数', value: `${s.totalQueries} 次`, sub: '包含群聊与私聊指令', icon: '🔍' },
+        { label: '自助授权码激活', value: `${s.totalActivates} 次`, sub: '用户自助兑换核销', icon: '🎫' },
+        { label: '管理员手动开通', value: `${s.totalAdds} 个`, sub: '面板/指令添加授权', icon: '🛡️' },
+        { label: '批量生成授权码', value: `${s.totalCardsCreated} 张`, sub: '已生成激活码总计', icon: '📦' },
     ]
 
     return (
         <div className="space-y-6 animate-fade-in-up">
-            {/* 统计卡片 */}
+            {/* 顶栏操作区 */}
+            <div className="flex justify-between items-center bg-white dark:bg-[#25262B] rounded-xl p-4 shadow-sm border border-gray-100 dark:border-gray-800">
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                    授权系统地址：<span className="font-semibold text-gray-900 dark:text-white font-mono">{status.config?.api_url || '未配置'}</span>
+                    <span className="mx-2 text-gray-300">|</span>
+                    默认项目ID：<code className="bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded text-blue-600 dark:text-blue-400 font-mono text-xs">{status.config?.default_appid || '1'}</code>
+                </div>
+                <button
+                    onClick={onRefresh}
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 text-xs font-medium rounded-lg hover:bg-blue-100 dark:hover:bg-blue-900/50 transition cursor-pointer"
+                >
+                    <IconRefresh size={14} />
+                    <span>刷新状态</span>
+                </button>
+            </div>
+
+            {/* 统计指标卡片 */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {cards.map((card, i) => (
                     <div key={i} className="bg-white dark:bg-[#25262B] rounded-xl p-5 shadow-sm border border-gray-100 dark:border-gray-800 hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between mb-3">
                             <span className="text-2xl">{card.icon}</span>
-                            <button onClick={onRefresh} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors cursor-pointer">
-                                <IconRefresh size={14} />
-                            </button>
+                            <span className="text-xs text-gray-400">{card.sub}</span>
                         </div>
                         <div className="text-2xl font-bold text-gray-800 dark:text-gray-100">{card.value}</div>
                         <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">{card.label}</div>
@@ -47,51 +63,62 @@ export default function StatusPage({ status, onRefresh }: StatusPageProps) {
                 ))}
             </div>
 
-            {/* 内置任务状态 */}
+            {/* 运行参数与信息 */}
             <div className="bg-white dark:bg-[#25262B] rounded-xl shadow-sm border border-gray-100 dark:border-gray-800">
-                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800">
-                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">内置核心任务状态</h2>
+                <div className="px-6 py-4 border-b border-gray-100 dark:border-gray-800 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100">机器人服务与运行参数</h2>
+                    <span className="px-2.5 py-1 text-xs rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400 font-medium">
+                        {status.pluginName}
+                    </span>
                 </div>
-                <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                    {builtinStatus.map((task, i) => (
-                        <div key={i} className="px-6 py-4 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className={`w-2.5 h-2.5 rounded-full ${task.enabled ? 'bg-emerald-500' : 'bg-gray-300 dark:bg-gray-600'}`} />
-                                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">{task.name}</span>
-                            </div>
-                            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <IconClock size={12} />
-                                <span>{task.time}</span>
-                                <span className={`ml-2 px-2 py-0.5 rounded-full text-xs ${task.enabled ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400' : 'bg-gray-100 text-gray-500 dark:bg-gray-800 dark:text-gray-500'}`}>
-                                    {task.enabled ? '运行中' : '已禁用'}
-                                </span>
-                            </div>
+                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div>
+                        <span className="text-gray-500 dark:text-gray-400">持续运行时间</span>
+                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-1">{status.uptime || '0秒'}</div>
+                    </div>
+                    <div>
+                        <span className="text-gray-500 dark:text-gray-400">管理员 QQ 列表</span>
+                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-1 font-mono">{status.config?.admin_qqs || '未设置'}</div>
+                    </div>
+                    <div>
+                        <span className="text-gray-500 dark:text-gray-400">自身消息上报 (report_self_message)</span>
+                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-1">
+                            {status.config?.report_self_message ? '已开启 (响应自身发送指令)' : '未开启 (仅监听群/私聊)'}
                         </div>
-                    ))}
+                    </div>
+                    <div>
+                        <span className="text-gray-500 dark:text-gray-400">指令触发前缀</span>
+                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-1 font-mono">{status.config?.command_prefix || '无前缀'}</div>
+                    </div>
+                    <div>
+                        <span className="text-gray-500 dark:text-gray-400">最近业务活跃时间</span>
+                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-1">{s.lastActiveTime || '暂无业务'}</div>
+                    </div>
+                    <div>
+                        <span className="text-gray-500 dark:text-gray-400">自身消息处理计数</span>
+                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-1">{s.totalSelfMessages} 条</div>
+                    </div>
                 </div>
             </div>
 
-            {/* 插件信息 */}
+            {/* 可用指令速查 */}
             <div className="bg-white dark:bg-[#25262B] rounded-xl shadow-sm border border-gray-100 dark:border-gray-800 p-6">
-                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">插件信息</h2>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">插件名称</span>
-                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-0.5">{status.pluginName} (云白专属增强版)</div>
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-100 mb-4">常用机器人指令速查</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-mono">
+                    <div className="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-lg space-y-1.5 text-gray-700 dark:text-gray-300">
+                        <div className="font-bold text-blue-600 dark:text-blue-400 font-sans mb-1">【普通用户指令】</div>
+                        <div>{status.config?.command_prefix || '#'}查授权 [域名]</div>
+                        <div>{status.config?.command_prefix || '#'}激活授权 [授权码] [域名]</div>
+                        <div>{status.config?.command_prefix || '#'}换绑授权 [旧域名] [新域名]</div>
+                        <div>{status.config?.command_prefix || '#'}授权帮助</div>
                     </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">全局开关</span>
-                        <div className={`font-medium mt-0.5 ${status.config.enabled ? 'text-emerald-600' : 'text-red-500'}`}>
-                            {status.config.enabled ? '已启用' : '已禁用'}
-                        </div>
-                    </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">调试模式</span>
-                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-0.5">{status.config.debug ? '开启' : '关闭'}</div>
-                    </div>
-                    <div>
-                        <span className="text-gray-500 dark:text-gray-400">统计日期</span>
-                        <div className="font-medium text-gray-800 dark:text-gray-200 mt-0.5">{status.stats.lastUpdateDay}</div>
+                    <div className="bg-gray-50 dark:bg-gray-800/60 p-4 rounded-lg space-y-1.5 text-gray-700 dark:text-gray-300">
+                        <div className="font-bold text-purple-600 dark:text-purple-400 font-sans mb-1">【管理员后台特权指令】</div>
+                        <div>{status.config?.command_prefix || '#'}开通授权 [域名] [QQ] [天数/0为永久] [应用ID]</div>
+                        <div>{status.config?.command_prefix || '#'}生成授权码 [数量] [天数/0为永久] [应用ID]</div>
+                        <div>{status.config?.command_prefix || '#'}封禁授权 [域名] [原因]</div>
+                        <div>{status.config?.command_prefix || '#'}解封授权 [域名]</div>
+                        <div>{status.config?.command_prefix || '#'}删除授权 [域名]</div>
                     </div>
                 </div>
             </div>

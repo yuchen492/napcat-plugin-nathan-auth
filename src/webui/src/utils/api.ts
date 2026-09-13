@@ -1,7 +1,7 @@
 import type { ApiResponse } from '../types'
 
 function resolvePluginName(): string {
-    if (window.__PLUGIN_NAME__) return window.__PLUGIN_NAME__
+    if ((window as any).__PLUGIN_NAME__) return (window as any).__PLUGIN_NAME__
     try {
         if (window.parent && (window.parent as Window & { __PLUGIN_NAME__?: string }).__PLUGIN_NAME__) {
             return (window.parent as Window & { __PLUGIN_NAME__?: string }).__PLUGIN_NAME__!
@@ -11,7 +11,7 @@ function resolvePluginName(): string {
     if (extMatch) return extMatch[1]
     const pluginMatch = location.pathname.match(/\/plugin\/([^/]+)/)
     if (pluginMatch) return pluginMatch[1]
-    return 'napcat-plugin-auto-tasks'
+    return 'napcat-plugin-nathan-auth'
 }
 
 const PLUGIN_NAME = resolvePluginName()
